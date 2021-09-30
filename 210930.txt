@@ -1,0 +1,252 @@
+데이터프레임
+
+통계함수 적용
+평균값 중간값
+#평균값 df.mean() : 전체 컬럼들의 평균
+- df["컬럼명"] : 해당 컬럼의 평균
+df["mpg"].mean()
+
+#중간값 df.median
+df["mpg"].median()
+
+#최대값 df.max()
+df["mpg"].max()
+
+#최소값 df.min()
+df["mpg"].min()
+
+#표준변차 df.std()
+df["mpg"].std()
+
+#상관계수 df.corr()
+df["mpg"].corr()
+
+판다스 내장 그래프 도구 활용
+
+# 판다스 내장 그래프 활용
+df = pd.read_excel("./남북한발전전력량.xlsx")
+
+df_ns = df.iloc[[0,5], 3:]
+df_ns.index = ['South', 'North']
+df_ns.columns = df_ns.columns.map(int)
+df_ns.columns
+
+df_ns.plot()
+
+/
+
+df_ns_t = df_ns.T
+df_ns_t.plot()    # 데이터프레임의 행과 열을 바꿈
+
+# 데이터 전처리 : 컬럼의 데이터 타입 변경, 원하는 정보만 추출
+# 데이터 가공, NaN 데이터 처리 ......
+
+df_ns_t = df_ns.T  # 데이터프레임의 행과 열을 바꿈
+df_ns_t.plot(kind='line')
+df_ns_t.plot(kind='bar')
+df_ns_t.plot(kind='hist')
+
+df_mpg = pd.read_csv("./auto-mpg.csv", header=None)
+df_mpg.columns = ['mpg','cylinders','displacement',
+             'horsepower','weight', 'acceleration',
+             'model_year','origin','name']
+
+df_mpg[['mpg','cylinders']].plot(kind='box')
+df_mpg.plot(x="weight", y="mpg", kind="scatter")
+
+----------------------
+
+Matplotlib - 기본 그래프 도구
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+df = pd.read_excel("./시도별 전출입 인구수.xlsx", header=0)
+print(df.head())
+
+# 데이터 전처리 작업
+df = df.fillna(method="ffill") # 전출지 누락된 데이터를 앞 데이터로 채움
+df.head()
+# 서울에서 다른 지역으로 이동한 데이터만 추출하여 정리
+mask = (df['전출지별'] == '서울특별시') & (df['전입지별'] != '서울특별시')
+df_seoul = df[mask] # mask를 이용하여 True인 데이터만 추출
+df_seoul = df_seoul.drop(['전출지별'], axis=1) # 전출지별 컬럼 삭제
+df_seoul.rename({'전입지별':'전입지'}, axis=1, inplace=True) # 컬럼명 변경
+df_seoul.set_index('전입지', inplace=True) # "전입지" 컬럼을 인덱스로 설정
+df_seoul
+
+--------------------------
+
+df_1 = df_seoul.loc['경기도']    # X축과 Y축으로 구성됨
+
+plt.style.use('ggplot')    # 그래프 스타일
+plt.plot(df_1.index, df_1.values, marker='o')   # plt.plot(x축, y축)
+
+plt.title("서울에서 경기도로 전출한 인구수", size=15)  # 제목
+plt.xlabel("연도", size=20)          # X축 라벨
+plt.ylabel("인구수", size=20)        # Y축 라벨
+plt.xticks(rotation = "30") # X축 라벨의 기울기
+plt.yticks(rotation = "1")  # Y축 라벨의 기울기
+plt.legend(labels=["서울->경기"],loc='upper right')
+
+plt.show()
+
+---------------------
+
+3개의 그래프 한꺼번에 출력
+
+# 서울에서 '충청남도', '경상북도', '강원도'로 이동한 인구 데이터만 선택해서 사용
+df = pd.read_excel("./시도별 전출입 인구수.xlsx", header=0)
+# NaN 데이터 처리 fillna() 함수 이용, 이전행의 자료로 변경
+df = df.fillna(method='ffill')
+# 서울에서 충청남도, 경상북도. 강원도로 이동한 데이터만 추출
+mask = (df['전출지별'] == '서울특별시') & ((df['전입지별'] == '경상북도') |\
+                                  (df['전입지별'] == '충청남도') | (df['전입지별'] == '강원도'))
+df_data = df[mask]
+# 년도가 string이므로 int로 변경
+df_data.drop(["전출지별"], inplace=True, axis=1)
+df_data.set_index(['전입지별'], inplace=True)
+df_data.columns.map(int)
+# 인덱스는 년도
+
+df_t = df_data.T
+fig = plt.figure(figsize=(20,5))
+ax = fig.add_subplot(1, 1, 1)
+
+ax.plot(df_t.index, df_t["충청남도"], marker="o", color='red')
+ax.plot(df_t.index, df_t["경상북도"], marker="+", color='b')
+ax.plot(df_t.index, df_t["강원도"], marker=".", color='black')
+ax.set_title("서울->충남, 경북, 강원 이동 인구", size=20)
+ax.set_xlabel("기간")
+ax.set_ylabel("인구수")
+
+legend_labels = ["충청남도","경상북도","강원도"]
+ax.legend(legend_labels,loc='best', fontsize=15)
+
+plt.show()
+
+-------------------
+
+면적 그래프 그리기
+mask = (df['전출지별'] == '서울특별시') & (df['전입지별'] != '서울특별시')
+df_seoul = df[mask]
+df_seoul = df_seoul.drop(['전출지별'], axis=1)
+df_seoul.rename({"전입지별" : "전입지"}, axis=1, inplace=True)
+df_seoul.set_index("전입지", inplace=True)
+
+col_years = list(map(str, range(1970, 2018)))
+
+df_4 = df_seoul.loc[['충청남도','경상북도','강원도','전라남도'], col_years]
+df_4 = df_4.transpose()
+
+plt.style.use('ggplot')
+
+df_4.plot(kind='area', stacked=False, alpha=0.2, figsize=(20,10))
+
+plt.title('서울-> 타시도 인구 이동', size=30)
+plt.ylabel('이동 인구 수', size=20)
+plt.xlabel('기간', size=20)
+plt.legend(loc='best', fontsize=15)
+
+plt.show()
+
+----------------
+
+mask = (df['전출지별'] == '서울특별시') & (df['전입지별'] != '서울특별시')
+df_seoul = df[mask]
+df_seoul = df_seoul.drop(['전출지별'], axis=1)
+df_seoul.rename({"전입지별" : "전입지"}, axis=1, inplace=True)
+df_seoul.set_index("전입지", inplace=True)
+
+col_years = list(map(str, range(1970, 2018)))
+
+df_4 = df_seoul.loc[['충청남도','경상북도','강원도','전라남도'], col_years]
+df_4 = df_4.transpose()
+
+plt.style.use('ggplot')
+
+df_4.plot(kind='area', stacked=False, alpha=0.2, figsize=(20,10))
+
+plt.title('서울-> 타시도 인구 이동', size=30)
+plt.ylabel('이동 인구 수', size=20)
+plt.xlabel('기간', size=20)
+plt.legend(loc='best', fontsize=15)
+
+df_4.index =df_4.index.map(int)
+ax = df_4.plot(kind='area', stacked=False, alpha=0.2, figsize=(20,10))
+print(type(ax))
+
+ax.set_title('서울-> 타시도 인구 이동', size=30, color='brown', weight='bold')
+ax.set_ylabel('이동 인구 수', size=20, color='blue')
+ax.set_xlabel('기간', size=20, color='blue')
+ax.legend(loc='best', fontsize=15,)
+
+plt.show()
+
+----------------------
+
+북한 전력 발전량 (1990 ~ 2016)
+# Excel 데이터를 데이터프레임 변환 
+df = pd.read_excel('./남북한발전전력량.xlsx', engine= 'openpyxl', convert_float=True)
+df = df.loc[5:9]
+df.drop('전력량 (억㎾h)', axis='columns', inplace=True)
+df.set_index('발전 전력별', inplace=True)
+df = df.T 
+
+# 증감율(변동률) 계산
+df = df.rename(columns={'합계':'총발전량'})
+df['총발전량 - 1년'] = df['총발전량'].shift(1)
+df['증감율'] = ((df['총발전량'] / df['총발전량 - 1년']) - 1) * 100      
+
+# 2축 그래프 그리기
+ax1 = df[['수력','화력']].plot(kind='bar', figsize=(20, 10), width=0.7, stacked=True)  
+ax2 = ax1.twinx()
+ax2.plot(df.index, df.증감율, ls='--', marker='o', markersize=20, 
+         color='green', label='전년대비 증감율(%)')  
+
+ax1.set_ylim(0, 500)
+ax2.set_ylim(-50, 50)
+
+ax1.set_xlabel('연도', size=20)
+ax1.set_ylabel('발전량(억 KWh)')
+ax2.set_ylabel('전년 대비 증감율(%)')
+
+plt.title('북한 전력 발전량 (1990 ~ 2016)', size=30)
+ax1.legend(loc='upper left')
+
+plt.show()
+
+------------------------
+
+Seaborn 라이브러리
+-Matplotlib의 기능과 스타일을 확장한 파이썬 시각화 도구의 고급 버전이다.
+- 비교적 단순한 인터페이스를 제공하기 때문에 초보자도 어렵지 않게 배울 수 있다.
+
+import seaborn as sns
+ 
+# Seaborn 제공 데이터셋 가져오기
+titanic = sns.load_dataset('titanic')
+ 
+# 스타일 테마 설정 (5가지: darkgrid, whitegrid, dark, white, ticks)
+sns.set_style('darkgrid')
+
+# 그래프 객체 생성 (figure에 2개의 서브 플롯을 생성)
+fig = plt.figure(figsize=(15, 5))   
+ax1 = fig.add_subplot(1, 2, 1)
+ax2 = fig.add_subplot(1, 2, 2)
+ 
+# 그래프 그리기 - 선형회귀선 표시(fit_reg=True)
+sns.regplot(x='age',        #x축 변수
+            y='fare',       #y축 변수
+            data=titanic,   #데이터
+            ax=ax1)         #axe 객체 - 1번째 그래프 
+
+# 그래프 그리기 - 선형회귀선 미표시(fit_reg=False)
+sns.regplot(x='age',        #x축 변수
+            y='fare',       #y축 변수
+            data=titanic,   #데이터
+            ax=ax2,         #axe 객체 - 2번째 그래프        
+            fit_reg=False)  #회귀선 미표시
+
+plt.show()
