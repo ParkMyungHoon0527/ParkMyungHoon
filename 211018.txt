@@ -1,0 +1,239 @@
+https://colab.research.google.com/github/rickiepark/hg-mldl/blob/master/3-2.ipynb#scrollTo=wR9eDDH2q9nP
+
+
+##선형회귀
+## http://bit.ly/hg-03-2
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+perch_length = np.array(
+    [8.4, 13.7, 15.0, 16.2, 17.4, 18.0, 18.7, 19.0, 19.6, 20.0, 
+     21.0, 21.0, 21.0, 21.3, 22.0, 22.0, 22.0, 22.0, 22.0, 22.5, 
+     22.5, 22.7, 23.0, 23.5, 24.0, 24.0, 24.6, 25.0, 25.6, 26.5, 
+     27.3, 27.5, 27.5, 27.5, 28.0, 28.7, 30.0, 32.8, 34.5, 35.0, 
+     36.5, 36.0, 37.0, 37.0, 39.0, 39.0, 39.0, 40.0, 40.0, 40.0, 
+     40.0, 42.0, 43.0, 43.0, 43.5, 44.0]
+     )
+perch_weight = np.array(
+    [5.9, 32.0, 40.0, 51.5, 70.0, 100.0, 78.0, 80.0, 85.0, 85.0, 
+     110.0, 115.0, 125.0, 130.0, 120.0, 120.0, 130.0, 135.0, 110.0, 
+     130.0, 150.0, 145.0, 150.0, 170.0, 225.0, 145.0, 188.0, 180.0, 
+     197.0, 218.0, 300.0, 260.0, 265.0, 250.0, 250.0, 300.0, 320.0, 
+     514.0, 556.0, 840.0, 685.0, 700.0, 700.0, 690.0, 900.0, 650.0, 
+     820.0, 850.0, 900.0, 1015.0, 820.0, 1100.0, 1000.0, 1100.0, 
+     1000.0, 1000.0]
+     )
+from sklearn.model_selection import train_test_split
+
+# 훈련 세트와 테스트 세트로 나눕니다
+train_input, test_input, train_target, test_target = train_test_split(
+    perch_length, perch_weight, random_state=42)
+# 훈련 세트와 테스트 세트를 2차원 배열로 바꿉니다
+train_input = train_input.reshape(-1, 1)
+test_input = test_input.reshape(-1, 1)
+from sklearn.neighbors import KNeighborsRegressor
+
+knr = KNeighborsRegressor(n_neighbors=3)
+# k-최근접 이웃 회귀 모델을 훈련합니다
+knr.fit(train_input, train_target)
+print(knr.predict([[50]]))
+import matplotlib.pyplot as plt
+# 50cm 농어의 이웃을 구합니다
+distances, indexes = knr.kneighbors([[50]])
+
+# 훈련 세트의 산점도를 그립니다
+plt.scatter(train_input, train_target)
+# 훈련 세트 중에서 이웃 샘플만 다시 그립니다
+plt.scatter(train_input[indexes], train_target[indexes], marker='D')
+# 50cm 농어 데이터
+plt.scatter(50, 1033, marker='^')
+plt.xlabel('length')
+plt.ylabel('weight')
+plt.show()
+plt.scatter(train_input, train_target)
+plt.scatter(50,1033,marker="D")
+plt.scatter(train_input[idex],train_target[index],marker="D", s=100)
+plt.show()
+
+--------------------------------
+
+## 선형회귀 (LinearRegression)
+from sklearn.linear_model import LinearRegression
+lr = LinearRegression()
+lr.fit(train_input, train_target)
+print(lr.score(train_input, train_target))
+print(lr.score(test_input, test_target))
+lr.predict([[50]])
+print(lr.coef_, lr.intercept_)
+x_new = np.arange(12,60)
+y_new = x_new*lr.coef_ + lr.intercept_
+plt.scatter(train_input, train_target)
+plt.scatter(50,1252,marker="^")
+plt.plot(x_new, y_new)
+plt.show()
+
+-------------------------------
+
+## polynomial
+
+train_input[:10]
+#print(train_input.shape)
+train_poly = np.column_stack((train_input, train_input**2))
+test_poly = np.column_stack((test_input, test_input**2))
+#train_poly[:10]
+test_poly[:10]
+lrp = LinearRegression()
+lrp.fit(train_poly, train_target)
+print(lrp.coef_, lrp.intercept_)
+print(lrp.score(train_poly, train_target))
+print(lrp.score(train_poly, train_target))
+print(lrp.score(test_poly, test_target))
+
+x_new = np.arange(10, 50)
+y_new = 112.14 -20.93*x_new+0.99*x_new**2
+
+plt.scatter(train_input, train_target)
+plt.plot(x_new, y_new)
+plt.show()
+
+---------------------------------
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+df = pd.read_csv('https://bit.ly/perch_csv')
+
+print(type(df))
+print(df.shape)
+
+
+perch_full=df.to_numpy()
+print(type(perch_full))
+
+
+print(df.shape)
+df.head()
+print(np.shape(perch_full))
+## https://bit.ly/perch_data
+perch_length = np.array([8.4, 13.7, 15.0, 16.2, 17.4, 18.0, 18.7, 19.0, 19.6, 20.0, 21.0,
+       21.0, 21.0, 21.3, 22.0, 22.0, 22.0, 22.0, 22.0, 22.5, 22.5, 22.7,
+       23.0, 23.5, 24.0, 24.0, 24.6, 25.0, 25.6, 26.5, 27.3, 27.5, 27.5,
+       27.5, 28.0, 28.7, 30.0, 32.8, 34.5, 35.0, 36.5, 36.0, 37.0, 37.0,
+       39.0, 39.0, 39.0, 40.0, 40.0, 40.0, 40.0, 42.0, 43.0, 43.0, 43.5,
+       44.0])
+perch_weight = np.array([5.9, 32.0, 40.0, 51.5, 70.0, 100.0, 78.0, 80.0, 85.0, 85.0, 110.0,
+       115.0, 125.0, 130.0, 120.0, 120.0, 130.0, 135.0, 110.0, 130.0,
+       150.0, 145.0, 150.0, 170.0, 225.0, 145.0, 188.0, 180.0, 197.0,
+       218.0, 300.0, 260.0, 265.0, 250.0, 250.0, 300.0, 320.0, 514.0,
+       556.0, 840.0, 685.0, 700.0, 700.0, 690.0, 900.0, 650.0, 820.0,
+       850.0, 900.0, 1015.0, 820.0, 1100.0, 1000.0, 1100.0, 1000.0,
+       1000.0])
+
+print(np.shape(perch_weight))
+from sklearn.model_selection import train_test_split
+train_input, test_input, train_target, test_target = train_test_split(
+perch_full, perch_weight, random_state = 42)
+## polynomial transform
+from sklearn.preprocessing import PolynomialFeatures
+poly = PolynomialFeatures(degree = 3)
+
+poly.fit([[2,3]])
+poly.transform([[2,3]])
+poly = PolynomialFeatures(degree=2,include_bias=False)
+poly.fit(train_input)
+train_poly = poly.transform(train_input)
+test_poly = poly.transform(test_input)
+print(train_poly[:10])
+poly.get_feature_names()
+from sklearn.linear_model import LinearRegression
+
+lr = LinearRegression()
+
+lr.fit(train_poly, train_target)
+print(lr.score(train_poly, train_target))
+print(lr.score(test_poly, test_target))
+
+-----------------------------
+
+## Ridge regression
+
+poly = PolynomialFeatures(degree=5, include_bias=False)
+
+poly.fit(train_input)
+
+train_poly = poly.transform(train_input)
+test_poly = poly.transform(test_input)
+print(np.shape(train_input))
+print(np.shape(train_poly))
+train_input[:5]
+train_poly[:5]
+lr = LinearRegression()
+lr.fit(train_poly, train_target)
+print(lr.score(train_poly, train_target))
+print(lr.score(test_poly, test_target))
+
+
+from sklearn.preprocessing import StandardScaler
+
+ss = StandardScaler()
+ss.fit(train_poly)
+
+train_scaled = ss.transform(train_poly)
+test_scaled = ss.transform(test_poly)
+
+from sklearn.linear_model import Ridge
+
+ridge = Ridge()
+ridge.fit(train_scaled, train_target)
+
+print(ridge.score(train_scaled, train_target))
+print(ridge.score(test_scaled, test_target))
+
+---------------------------------
+
+## Ridge lambda plot
+train_score = []
+test_score = []
+
+alpha_list = [0.001, 0.01, 0.1, 1, 10, 100]
+
+for alpha in alpha_list:
+    ridge = Ridge(alpha = alpha)
+    ridge.fit(train_scaled, train_target)
+    
+    train_score.append(ridge.score(train_scaled, train_target))
+    test_score.append(ridge.score(test_scaled, test_target))
+
+train_score
+test_score
+
+plt.plot(np.log10(alpha_list), train_score, label ="Train")
+plt.plot(np.log10(alpha_list), test_score, label="Test")
+
+plt.xlabel("log10(alpha)")
+plt.ylabel("R^2")
+plt.legend()
+
+plt.show()
+
+--------------------------------------
+## LASSO penalty
+
+from sklearn.linear_model import Lasso
+
+lasso = Lasso()
+lasso.fit(train_scaled, train_target)
+
+print(lasso.score(train_scaled, train_target))
+print(lasso.score(test_scaled, test_target))
+
+lasso = Lasso(alpha=10)
+lasso.fit(train_scaled, train_target)
+
+print(lasso.score(train_scaled, train_target))
+print(lasso.score(test_scaled, test_target))
+
+np.sum(lasso.coef_ !=0)
+
+---------------------------------------
+
