@@ -1,0 +1,228 @@
+import numpy as np
+import pandas as pd
+import matplotlib as plt
+
+fish = pd.read_csv('https://bit.ly/fish_csv')
+fish.head()
+
+print(fish.shape)
+fish['Species'].value_counts()
+
+fish_input = fish[["Weight", "Length", "Diagonal", "Height", "Width"]].to_numpy()
+#fish_input.head()
+# fish_input[:5]
+fish_target = fish["Species"].to_numpy()
+fish_target[:10]
+
+from sklearn.model_selection import train_test_split
+
+train_input, test_input, train_target, test_target = train_test_split(
+fish_input, fish_target, stratify=fish_target)
+
+print(np.shape(train_input))
+print(np.shape(test_input))
+
+from sklearn. preprocessing import StandardScaler
+
+ss = StandardScaler()
+ss.fit(train_input)
+train_scaled = ss.transform(train_input)
+test_scaled = ss.transform(test_input)
+
+from sklearn.linear_model import SGDClassifier
+
+sg = SGDClassifier(loss = "log", max_iter=100)
+
+sg.fit(train_scaled, train_target)
+print(sg.score(train_scaled, train_target))
+print(sg.score(test_scaled, test_target))
+
+sg.partial_fit(train_scaled, train_target)
+
+print(sg.score(train_scaled, train_target))
+print(sg.score(test_scaled, test_target))
+
+--------------------------------------------------------------------
+
+# Decision_tree
+# https://bit.ly/hg-05-1
+
+import numpy as np
+import pandas as pd
+import matplotlib as plt
+
+wine = pd.read_csv('https://bit.ly/wine-date')
+wine.head()
+#wine.info()
+
+data = wine[["alcohol", "sugar", "pH"]].to_numpy()
+target = wine["class"].to_numpy()
+
+data[:10]
+
+from sklearn.model_selection import train_test_split
+
+train_input, test_input, train_target, test_target = train_test_split(
+data, target, stratify=target)
+
+print(train_input.shape)
+print(test_input.shape)
+
+from sklearn.tree import DecisionTreeClassifier
+
+dt = DecisionTreeClassifier()
+dt.fit(train_input, train_target)
+
+print(dt.score(train_input, train_target))
+print(dt.score(test_input, test_target))
+
+from sklearn.tree import plot_tree
+
+plt.figure(figsize= (10,7))
+plot_tree(dt)
+plt.show()
+
+plt.figure(figsize = (10,7))
+plot_tree(dt, max_dept = 1, feature_names=["alcohol","sugar","pH"])
+plt.show()
+
+dt = DecisionTreeClassifier(max_depth=3, random_state=42)
+
+dt.fit(train_input, train_target)
+
+print(dt.score(train_input, train_target))
+print(dt.score(test_input, test_target))
+
+plt.figure(figsize=(20,15))
+plot_tree(dt, feature_names=["alcohol","sugar","pH"])
+plt.show()
+
+-----------------------------------------------------------------------------------
+
+# Cross validation and Grid search
+# https://bit.ly/hg-05-2
+
+import numpy as np
+import pandas as pd
+import matplotlib as plt
+
+wine = pd.read_csv('https://bit.ly/wine-date')
+wine.head()
+
+data = wine[["alcohol","sugar","pH"]].to_numpy()
+target = wine["class"].to_numpy()
+
+print(data.shape)
+
+from sklearn.model_selection import train_test_split
+
+train_input, test_input, train_target, test_target = train_test_split(
+data, target, stratify=target, random_state=42)
+
+from sklearn.tree import DecisionTreeClassifier
+
+dt = DecisionTreeClassifier(random_state=42)
+
+from sklearn.model_selection import cross_validate
+from sklearn.model_selection import StratifiedKFold
+
+splitter = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
+score = cross_validate(dt, train_input, train_target, cv = splitter)
+
+score['test_score'].mean()
+print(score)
+
+##
+from sklearn.model_selection import GridSearchCV
+
+dt = DecisionTreeClassifier()
+
+param = {"max_depth": np.arange(4, 20, 1),
+        'min_impurity_decrease' : np.arange(0.0001, 0.001, 0.001)}
+
+gs = GridSearchCV(dt, param_grid = param, cv=5,
+                 n_jobs = -1)
+
+gs.fit(train_input, train_target)
+gs.cv_results_['mean_test_score']
+
+#dt = gs.best_estimator_
+#print(dt.score(train_input, train_target))
+
+gs.best_params_
+## 랜덤포레스트
+
+from sklearn.model_selection import cross_validate
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+
+rf = RandomForestClassifier(n_estimators=100,
+                           criterion="gini",
+                           n_jobs = -1,)
+
+
+scores = cross_validate(rf, train_input, train_target, cv=10,
+                       return_train_score=True)
+
+print(np.mean(scores['test_score']))
+print(np.mean(scores['train_score']))
+
+rf = RandomForestClassifier(n_estimators=100,
+                           criterion="gini",
+                           n_jobs = -1,)
+
+rf.fit(train_input, train_target)
+print(rf.feature_importances_)
+print(wine.columns)
+
+---------------------------------------------------------------------------
+
+# K-mean clustering
+# https://bit.ly/hg-06-1
+
+# https://www.kaggle.com/moltean/furits
+
+! python -m wget https://bit.ly/fruits_300 -o fruits_300.npy
+! pip install wget
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+fruits = np.load('fruits_300.npy')
+#fruits[0]
+
+plt.imshow(fruits[0], cmap="gray_r")
+plt.show()
+
+print(fruits.shape)
+
+fruits_2d = fruits.reshape(-1, 10000)
+print(fruits_2d.shape)
+
+fig, axs = plt.subplots(1, 3)
+axs[0].imshow(fruits[0], cmap='gray_r')
+axs[1].imshow(fruits[100], cmap='gray_r')
+axs[2].imshow(fruits[200], cmap='gray_r')
+
+plt.show()
+
+from sklearn.cluster import KMeans
+km = KMeans(n_clusters=3, random_state = 42)
+km.fit(fruits_2d)
+print(km.labels_)
+km_center = km.cluster_centers_.reshape(-1, 100,100)
+
+print(km_center.shape)
+
+inertia = []
+
+for k in range(2, 7):
+    km = KMeans(n_clusters = k, random_state=42)
+    km.fit(fruits_2d)
+    inertia.append(km.inertia_)
+    
+plt.plot(range(2,7), inertia)
+plt.show()
+
+km.predict(fruits_2d[100:101])
+
