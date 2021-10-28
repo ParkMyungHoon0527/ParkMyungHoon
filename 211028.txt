@@ -1,0 +1,206 @@
+★NN_TEST★
+
+import tensorflow as tf
+import matplotlib.pyplot as plt
+import numpy as np
+
+(x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
+
+test_image = x_test[0]
+
+test_image_reshape = test_image.reshape(1, 784).astype('float64')
+# 28 * 28이미지를 784개로 reshape하고, 1--> 데이터가 1개다. batchsize
+
+model = tf.keras.models.load_model('/content/drive/MyDrive/Colab Notebooks/영우_4기_딥러닝/dataset/my_NN_Test.h5')
+
+y_pred = model.predict(test_image_reshape)
+
+print(y_pred)
+
+index = np.argmax(y_pred)
+print(index)
+
+index = np.argmax(y_pred)
+value = y_pred[:, index]
+plt.imshow(test_image, cmap='Greys')
+plt.xlabel(str(index)+"   "+str(value))
+plt.show()
+
+
+
+★NN_TEST_Rotation★
+
+import tensorflow as tf
+import matplotlib.pyplot as plt
+import numpy as np
+import cv2
+
+(x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
+
+# 이미지 회전 변환 매트릭스 구하기
+M = cv2.getRotationMatrix2D((28/2, 28/2), 0, 1) # Matrix생성
+
+# 이미지 이동 변환 매트릭스 구하기
+M[0, 2] = M[0, 2] +3
+M[1, 2] = M[1, 2] +3
+
+# 이미지 변환 매트릭스 적용
+test_image = cv2.warpAffine(x_train[5], M, (28, 28)) #image에 matrix곱
+
+plt.imshow(test_image, cmap="Greys")
+
+test_image_reshape = test_image.reshape(1,784).astype('float64')
+
+model = tf.keras.models.load_model('/content/drive/MyDrive/Colab Notebooks/영우_4기_딥러닝/dataset/my_NN_Test.h5')
+
+y_pred = model.predict(test_image_reshape)
+
+index = np.argmax(y_pred)
+value = y_pred[:, index]
+plt.imshow(test_image, cmap='Greys')
+plt.xlabel(str(index)+"   "+str(value))
+plt.show()
+
+print(value)
+
+plt.imshow(x_train[5], cmap='Greys')
+
+
+
+★MNIST_CNN★
+
+import matplotlib.pyplot as plt
+import os
+import tensorflow as tf
+import numpy as np
+
+(x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
+
+# 데이터 (배치사이즈 x 28 x 28 x 1)로 이미지로 변환 --> 그레이스케일 채널은 1
+x_train = x_train.reshape(x_train.shape[0], 28, 28, 1).astype('float32')
+x_test = x_test.reshape(x_test.shape[0], 28, 28, 1).astype('float32')
+
+y_train = tf.keras.utils.to_categorical(y_train)
+y_test = tf.keras.utils.to_categorical(y_test)
+
+# CNN 모델 설계
+input_layer = tf.keras.layers.Input(shape=(28, 28, 1))
+x = tf.keras.layers.Conv2D(32, (3, 3), strides =1, activation='relu', padding='same')(input_layer)
+x = tf.keras.layers.MaxPool2D((2, 2))(x)
+x = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation='relu')(x)
+x = tf.keras.layers.MaxPool2D((2, 2))(x)
+x = tf.keras.layers.Flatten()(x)
+output_layer = tf.keras.layers.Dense(10, activation='softmax')(x)
+
+model = tf.keras.Model(inputs=[input_layer], outputs=[output_layer])
+model.summary()
+
+loss = tf.keras.losses.categorical_crossentropy
+optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.0001)
+metrics = tf.keras.metrics.categorical_accuracy
+model.compile(loss=loss,
+              optimizer = optimizer,
+              metrics= [metrics])
+
+model_dir = './cnn_mnist_model/'
+if not os.path.exists(model_dir):
+    os.mkdir(model_dir)
+
+model_path='./cnn_mnist_model/{epoch:02d}-{val_loss:.4f}.hdf5'
+callback_list = [tf.keras.callbacks.ModelCheckpoint(filepath=model_path, monitor='val_loss', verbose=1, save_best_only=True),
+                 tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10)]
+          
+history = model.fit(x_train, y_train, validation_split=0.2, epochs=5, batch_size=200, verbose=1, callbacks=callback_list)
+
+# 테스트 정확도 출력
+print("\n Test Accuracy: %.4f" % (model.evaluate(x_test, y_test)[1]))
+
+# 테스트 셋의 오차
+y_vloss = history.history['val_loss']
+
+# 학습셋의 오차
+y_loss = history.history['loss']
+
+# 그래프로 표현
+x_len = np.arange(len(y_loss))
+plt.plot(x_len, y_vloss, marker='.', c="red", label='Testset_loss')
+plt.plot(x_len, y_loss, marker='.', c="blue", label='Trainset_loss')
+
+# 그래프에 그리드를 주고 레이블을 표시
+plt.legend(loc='upper right')
+plt.grid()
+plt.xlabel('epoch')
+plt.ylabel('loss')
+plt.show()
+
+
+
+★Fashion mnsit CNN★
+
+import matplotlib.pyplot as plt
+import os
+import tensorflow as tf
+import numpy as np
+
+# 데이터 불러오기
+(x_train, y_train), (x_test, y_test) = tf.keras.datasets.fashion_mnist.load_data()
+
+# (배치사이즈 * 28 * 28 * 1)로 이미지 변환 ---> 그레이스케일은 채널 1
+x_train = x_train.reshape(x_train.shape[0], 28, 28, 1).astype('float32')
+x_test = x_test.reshape(x_test.shape[0], 28, 28, 1).astype('float32')
+
+y_train = tf.keras.utils.to_categorical(y_train)
+y_test = tf.keras.utils.to_categorical(y_test)
+
+# CNN 모델 설계
+input_layer = tf.keras.layers.Input(shape=(28, 28, 1))
+x = tf.keras.layers.Conv2D(32, (3,3), strides=1, activation='relu', padding='same')(input_layer)
+x = tf.keras.layers.MaxPool2D((2, 2))(x)
+x = tf.keras.layers.Conv2D(64, (3, 3), strides=1, activation='relu', padding='same')(x)
+x = tf.keras.layers.MaxPool2D((2, 2))(x)
+x = tf.keras.layers.Flatten()(x)
+x = tf.keras.layers.Dense(512, activation='relu')(x)
+output_layer = tf.keras.layers.Dense(10, activation='softmax')(x)
+
+model = tf.keras.Model(inputs=[input_layer], outputs=[output_layer])
+model.summary()
+
+loss = tf.keras.losses.categorical_crossentropy
+optimize = tf.keras.optimizers.RMSprop(learning_rate=0.0001)
+metric = tf.keras.metrics.categorical_accuracy
+
+model.compile(loss=loss,
+              optimizer = optimize,
+              metrics=[metric])
+
+model_dir = './cnn_fasion_mnist_model/'
+if not os.path.exists(model_dir):
+    os.mkdir(model_dir)
+
+model_path='./cnn_fasion_mnist_model/{epoch:02d}-{val_loss:.4f}.hdf5'
+callback_list = [tf.keras.callbacks.ModelCheckpoint(filepath=model_path, monitor='val_loss', verbose=1, save_best_only=True),
+                 tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10)]
+
+history = model.fit(x_train, y_train, validation_split=0.2, epochs=5, batch_size=200, verbose=1, callbacks=callback_list)
+
+#테스트 정확도 출력
+print("\n Test Accuracy: %.4f" % (model.evaluate(x_test, y_test)[1]))
+
+# 테스트 셋의 오차
+y_vloss = history.history['val_loss']
+
+# 학습셋의 오차
+y_loss = history.history['loss']
+
+# 그래프로 표현
+x_len = np.arange(len(y_loss))
+plt.plot(x_len, y_vloss, marker='.', c="red", label='Testset_loss')
+plt.plot(x_len, y_loss, marker='.', c="blue", label='Trainset_loss')
+
+# 그래프에 그리드를 주고 레이블을 표시
+plt.legend(loc='upper right')
+plt.grid()
+plt.xlabel('epoch')
+plt.ylabel('loss')
+plt.show()
+
